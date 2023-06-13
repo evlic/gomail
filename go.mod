@@ -1,4 +1,4 @@
-module github.com/Shopify/gomail
+module  lab.threathunter.cn/3as/gomail
 
 go 1.13
 

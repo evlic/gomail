@@ -55,7 +55,7 @@ func TestLoginTLS(t *testing.T) {
 }
 
 func testLoginAuth(t *testing.T, test *authTest) {
-	auth := &loginAuth{
+	auth := &LoginAuth{
 		username: testUser,
 		password: testPwd,
 		host:     testHost,

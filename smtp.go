@@ -125,13 +125,9 @@ func (d *Dialer) Dial() (SendCloser, error) {
 			case strings.Contains(auths, "CRAM-MD5"):
 				d.Auth = smtp.CRAMMD5Auth(d.Username, d.Password)
 			case strings.Contains(auths, "PLAIN"):
-				d.Auth = smtp.PlainAuth("", d.Username, d.Password, d.Host)
+				d.Auth = PlainAuth(d.Username, d.Password)
 			case strings.Contains(auths, "LOGIN") && !strings.Contains(auths, "PLAIN"):
-				d.Auth = &loginAuth{
-					username: d.Username,
-					password: d.Password,
-					// host:     d.Host,
-				}
+				d.Auth = LoginAuth(d.Username, d.Password)
 			case strings.Contains(auths, "NTLM"):
 				d.Auth = NtlmAuth(d.Username, d.Password)
 			default:

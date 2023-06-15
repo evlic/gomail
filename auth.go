@@ -70,6 +70,13 @@ func (a *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 	}
 }
 
+func PlainAuth(username, password string) smtp.Auth {
+	return &plainAuth{
+		username: username,
+		password: password,
+	}
+}
+
 type plainAuth struct {
 	username, password string
 }

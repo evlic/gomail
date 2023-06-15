@@ -55,10 +55,10 @@ func TestLoginTLS(t *testing.T) {
 }
 
 func testLoginAuth(t *testing.T, test *authTest) {
-	auth := &LoginAuth{
+	auth := &loginAuth{
 		username: testUser,
 		password: testPwd,
-		host:     testHost,
+		//host:     testHost,
 	}
 	server := &smtp.ServerInfo{
 		Name: testHost,

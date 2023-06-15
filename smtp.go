@@ -127,7 +127,7 @@ func (d *Dialer) Dial() (SendCloser, error) {
 			case strings.Contains(auths, "PLAIN"):
 				d.Auth = smtp.PlainAuth("", d.Username, d.Password, d.Host)
 			case strings.Contains(auths, "LOGIN") && !strings.Contains(auths, "PLAIN"):
-				d.Auth = &LoginAuth{
+				d.Auth = &loginAuth{
 					username: d.Username,
 					password: d.Password,
 					// host:     d.Host,

@@ -1,33 +1,45 @@
 package gomail
 
 import (
+	"errors"
 	"fmt"
 	"net/smtp"
 
 	"github.com/Azure/go-ntlmssp"
 )
 
-const loginMechanism = "LOGIN"
+// 出于业务需要我们对如下鉴权机制进行了支持 LOGIN PLAIN NTLM CRAM-MD5
+// 重点支持了 LOGIN PLAIN（适用最广泛）
 
-// LoginAuth is an smtp.Auth that implements the LOGIN authentication mechanism.
-type LoginAuth struct {
+const (
+	loginMechanism = "LOGIN"
+	plainMechanism = "PLAIN"
+	ntlmMechanism  = "NTLM"
+)
+
+// loginAuth is an smtp.Auth that implements the LOGIN authentication mechanism.
+type loginAuth struct {
 	username string
 	password string
 	// host     string
 }
 
-func (a *LoginAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
+func LoginAuth(username, password string) smtp.Auth {
+	return &loginAuth{username: username, password: password}
+}
+
+func (a *loginAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
 	// if !server.TLS {
-		// advertised := false
-		// for _, mechanism := range server.Auth {
-		// 	if mechanism == loginMechanism {
-		// 		advertised = true
-		// 		break
-		// 	}
-		// }
-		// if !advertised {
-		// 	return "", nil, errors.New("gomail: unencrypted connection")
-		// }
+	// advertised := false
+	// for _, mechanism := range server.Auth {
+	// 	if mechanism == loginMechanism {
+	// 		advertised = true
+	// 		break
+	// 	}
+	// }
+	// if !advertised {
+	// 	return "", nil, errors.New("gomail: unencrypted connection")
+	// }
 	// }
 	// if server.Name != a.host {
 	// 	return "", nil, errors.New("gomail: wrong host name")
@@ -35,7 +47,7 @@ func (a *LoginAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
 	return loginMechanism, []byte{}, nil
 }
 
-func (a *LoginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
+func (a *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 	if !more {
 		return nil, nil
 	}
@@ -56,6 +68,34 @@ func (a *LoginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 	default:
 		return nil, fmt.Errorf("unknown fromServer: %s", string(fromServer))
 	}
+}
+
+type plainAuth struct {
+	username, password string
+}
+
+func (a *plainAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
+	// Must have TLS, or else localhost server.
+	// Note: If TLS is not true, then we can't trust ANYTHING in ServerInfo.
+	// In particular, it doesn't matter if the server advertises PLAIN auth.
+	// That might just be the attacker saying
+	// "it's ok, you can trust me with your password."
+	//if !server.TLS && !isLocalhost(server.Name) {
+	//	return "", nil, errors.New("unencrypted connection")
+	//}
+	//if server.Name != a.host {
+	//	return "", nil, errors.New("wrong host name")
+	//}
+	resp := []byte("" + "\x00" + a.username + "\x00" + a.password)
+	return plainMechanism, resp, nil
+}
+
+func (a *plainAuth) Next(fromServer []byte, more bool) ([]byte, error) {
+	if more {
+		// We've already sent everything.
+		return nil, errors.New("unexpected server challenge")
+	}
+	return nil, nil
 }
 
 type ntlmAuth struct {
